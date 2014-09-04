@@ -18,6 +18,7 @@ const int btGnd = 20;
 
 // Pins
 const int ledPin = 13;
+const int buttonPin = 2;
 
 //------------------------------------------------------------------------------
 // State variables
@@ -31,6 +32,9 @@ boolean update = false;
 int hours = 14;
 int minutes = 8;
 int seconds = 55;
+
+// Button
+boolean trigger = false;
 
 //==============================================================================
 // Setup
@@ -53,6 +57,10 @@ void setup() {
   // Timer
   Timer3.initialize(1000000);          // Set 1 second period
   Timer3.attachInterrupt(updateClock);
+  
+  // Button
+  pinMode(buttonPin, INPUT);
+  attachInterrupt(0, emergencyTrigger, RISING);
 }
 
 //===============================================================================
@@ -60,7 +68,6 @@ void setup() {
 //
 void loop() {
   
-  // Print string
   if(bluetoothInputComplete){
     // Serial.println(bluetoothInput); // Debugging
     processCommand(bluetoothInput);
@@ -70,6 +77,11 @@ void loop() {
   
   if(update){
     Serial.println(timeToString(hours, minutes));
+  }
+  
+  if(trigger){
+    Serial1.println("HELP");
+    trigger = false;
   }
 }
 
@@ -116,6 +128,10 @@ void updateClock(){
   }
 }
 
+void emergencyTrigger(){
+  trigger = true;
+}
+
 //==============================================================================
 // Auxiliar functions
 //
@@ -149,6 +165,7 @@ void processCommand(String command){
   Serial.println(command);
   
   if(command.startsWith("SYNC")){
+    digitalWrite(ledPin, LOW); 
     time = command.substring(5, 11);
     syncClock(time);
   } else if(command.startsWith("OK")){
@@ -161,8 +178,9 @@ void syncClock(String time){
   hours = (time.substring(0, 2)).toInt();
   minutes = (time.substring(2, 4)).toInt();
   seconds = (time.substring(4, 6)).toInt();
-  
+  /*
   Serial.println(hours);
   Serial.println(minutes);
   Serial.println(seconds);
+  */
 }
