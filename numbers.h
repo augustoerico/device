@@ -1,4 +1,4 @@
-const int digits[10][92] = 
+const unsigned char digits[10][92] = 
 {	
   {
     0x00, 0x00, 0x00, 0x00,

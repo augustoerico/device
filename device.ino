@@ -13,7 +13,7 @@
 //------------------------------------------------------------------------------
 // Configuration parameters
 
-// Display
+// Display SCL = A5, SDA = A4
 const int displayAddress = 0x3c;
 const int MAX_COLUMN     = 92;
 
@@ -32,7 +32,7 @@ int seconds = 55;
 void setup(){
   
   // USB serial (for Debugging using Monitor)
-  Serial.begin(9600);
+  // Serial.begin(9600);
   
   // Timer
   Timer1.initialize(1000000);          //FIXME: set for 1 ms? // Set 1 second period
@@ -44,6 +44,12 @@ void setup(){
   initializeDisplay();
   // TODO: PCSOS logo here
   
+  writeDigit(1);
+  writeDigit(2);
+  writeDigit(3);
+  writeDigit(minutes);
+  writeLetter(0);
+  
 }
 
 //===============================================================================
@@ -52,7 +58,6 @@ void setup(){
 void loop(){
   
   if(update){
-    Serial.println(timeToString(hours, minutes));
     printClock();
     update = false;
   }
@@ -90,12 +95,12 @@ void updateClock(){
 
 void initializeDisplay(){
   
+  clearDisplay();
+  
   writeCommand(0xD3); // set vertical offset
   writeCommand(0x00); // to column 0
   
-  writeCommand(0xAF); // exit sleep mode
-  
-  delay(250);
+  delay(50);
   
   writeCommand(0x20); // set addressing mode
   writeCommand(0x01); // vertical addressing
@@ -107,6 +112,39 @@ void initializeDisplay(){
   writeCommand(0x22); // set page address
   writeCommand(0x02); // starts in page 2d
   writeCommand(0x05); // ends in page 5d
+  
+  writeCommand(0x81); // set contrast value
+  writeCommand(0x00); // lowest value
+  
+  writeCommand(0xA4); // display memory content (instead of all on)
+  
+  delay(50);
+  writeCommand(0xAF); // display on
+  
+}
+
+//==============================================================================
+// Set all pixels off
+//
+void clearDisplay(){
+  
+  writeCommand(0x20); // set addressing mode
+  writeCommand(0x00); // horizontal addressing
+  
+  writeCommand(0x21); // set column address
+  writeCommand(0x00); // start in 0d
+  writeCommand(0x7F); // ends in 127d
+  
+  writeCommand(0x22); // set page address
+  writeCommand(0x00); // starts in page 0d
+  writeCommand(0x07); // ends in page 7d
+  
+  int i, j;
+  for(i = 0; i < 8; i++){
+    for(j = 0; j < 128; j++){
+      writeData(0x00);
+    }
+  }
   
 }
 
@@ -160,24 +198,4 @@ void writeData(int data){
   Wire.write(data);
   Wire.endTransmission();
   
-}
-
-//------------------------------------------------------------------------------
-//   Returns a string representing the current time
-String timeToString(int hours, int minutes){
-  
-  String h = String(hours);
-  String m = String(minutes);
-  
-  if(hours < 10){
-    h = String("0" + h);
-  }
-  
-  if(minutes < 10) {
-    m = String("0" + m);
-  }
-  
-  update = false;
-  
-  return String(h + "h" + m);
 }

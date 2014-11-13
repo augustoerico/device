@@ -1,4 +1,4 @@
-const int letters[1][92] = {
+const unsigned char letters[1][92] = {
 
   {
     0x00, 0x00, 0x00, 0x00,
