@@ -17,8 +17,21 @@
 const int displayAddress = 0x3c;
 const int MAX_COLUMN     = 92;
 
+// Bluetooth
+const int SERIAL_BUFFER_SIZE = 10;
+const char EOI_BYTE = '\n';              // End of Information byte
+const int btVcc = 5;
+
+// Pins
+const int buttonPin = 2;
+const int ledPin    = 13;
+
 //------------------------------------------------------------------------------
 // State variables
+
+// Bluetooth
+String bluetoothInput = "";              // Strings holds the input from serial1
+boolean bluetoothInputComplete = false;  // Whether the input string is complete
 
 // Clock
 boolean update = false;
@@ -26,30 +39,39 @@ int hours = 10;
 int minutes = 8;
 int seconds = 55;
 
+// Button
+boolean trigger = false;
+
+// Led
+boolean led = LOW;
+
 //==============================================================================
 // Setup
 //
 void setup(){
   
-  // USB serial (for Debugging using Monitor)
-  // Serial.begin(9600);
-  
   // Timer
   Timer1.initialize(1000000);          //FIXME: set for 1 ms? // Set 1 second period
   Timer1.attachInterrupt(updateClock);
   
+  // Button
+  pinMode(buttonPin, INPUT);
+  attachInterrupt(0, emergencyTrigger, RISING);
+  
+  // Bluetooth
+  Serial.begin(9600);
+  
   Wire.begin();
   delay(10);
-  
   initializeDisplay();
   // TODO: PCSOS logo here
   
-  writeDigit(1);
-  writeDigit(2);
-  writeDigit(3);
-  writeDigit(minutes);
+  // Dummy test
   writeLetter(0);
-  
+  writeDigit(0);
+  writeDigit(0);
+  writeDigit(3);
+  writeDigit(1);  
 }
 
 //===============================================================================
@@ -57,9 +79,20 @@ void setup(){
 //
 void loop(){
   
+  if(bluetoothInputComplete){
+    processCommand(bluetoothInput);
+    bluetoothInput = "";
+    bluetoothInputComplete = false;
+  }
+  
   if(update){
     printClock();
     update = false;
+  }
+  
+  if(trigger){
+    Serial.println("HELP");
+    trigger = false;
   }
   
 }
@@ -68,6 +101,26 @@ void loop(){
 //==============================================================================
 // Interruptions
 //
+
+//------------------------------------------------------------------------------
+//  serialEvent is triggered whenever a new data comes in the serial RX0
+void serialEvent(){
+  
+  int i = 0;
+  while (Serial.available()){
+    // Get new byte from serial
+    char inChar = (char) Serial.read();
+    
+    if(inChar == EOI_BYTE || i > SERIAL_BUFFER_SIZE){
+      bluetoothInputComplete = true;
+    } else {
+      bluetoothInput += inChar;
+    }
+    
+    i++;
+  }
+  
+}
 
 //------------------------------------------------------------------------------
 //   updateClock called in the period defined
@@ -87,6 +140,10 @@ void updateClock(){
     }
   }
   
+}
+
+void emergencyTrigger(){
+  trigger = true;
 }
 
 //==============================================================================
@@ -197,5 +254,31 @@ void writeData(int data){
   Wire.write(0x40);
   Wire.write(data);
   Wire.endTransmission();
+  
+}
+
+//------------------------------------------------------------------------------
+//   Processes the command received
+void processCommand(String command){
+  
+  String time;
+  
+  Serial.println(command);
+  
+  if(command.startsWith("SYNC")){
+    digitalWrite(ledPin, LOW); 
+    time = command.substring(5, 11);
+    syncClock(time);
+    printClock();
+  } else if(command.startsWith("OK")){
+    digitalWrite(ledPin, HIGH);
+  }
+}
+
+void syncClock(String time){
+  
+  hours = (time.substring(0, 2)).toInt();
+  minutes = (time.substring(2, 4)).toInt();
+  seconds = (time.substring(4, 6)).toInt();
   
 }
