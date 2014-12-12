@@ -9,6 +9,7 @@
 #include <Wire.h>
 #include "numbers.h"
 #include "letters.h"
+#include "icons.h"
 
 //------------------------------------------------------------------------------
 // Configuration parameters
@@ -207,6 +208,17 @@ void clearDisplay(){
 
 void printClock(){
   
+  writeCommand(0x20); // set addressing mode
+  writeCommand(0x01); // vertical addressing
+  
+  writeCommand(0x21); // set column address
+  writeCommand(0x05); // start in 5d
+  writeCommand(0x77); // ends in 119d
+  
+  writeCommand(0x22); // set page address
+  writeCommand(0x02); // starts in page 2d
+  writeCommand(0x05); // ends in page 5d
+  
   writeDigit(hours/10);
   writeDigit(hours%10);
   writeLetter(0);
@@ -225,6 +237,42 @@ void writeDigit(int digit){
     writeData(digits[digit][i]);
   }
   
+}
+
+//==============================================================================
+// Write a icon to display
+//
+// FIXME pass icon as well
+void writeIcon(const unsigned char icon[], int startPage, int startColumn, 
+  int endPage, int endColumn){
+   
+    // TODO: write validation function
+    
+    // set columns delimitations
+    writeCommand(0x21);       // set column address
+    writeCommand(startColumn); 
+    writeCommand(endColumn);
+    
+    // set page delimitations
+    writeCommand(0x22);       // set page address
+    writeCommand(startPage);
+    writeCommand(endPage);
+    
+    // Write icon
+    int bytes = (endPage - startPage + 1)*(endColumn - startColumn + 1);
+    int b;
+    for(b = 0; b < bytes; b++){
+      writeData(icon[b]);
+    }
+    
+    // Back to previous state // TODO: stack the display configurations
+    writeCommand(0x21); // set column address
+    writeCommand(0x05); // start in 5d
+    writeCommand(0x77); // ends in 119d
+    
+    writeCommand(0x22); // set page address
+    writeCommand(0x02); // starts in page 2d
+    writeCommand(0x05); // ends in page 5d
 }
 
 //==============================================================================
@@ -272,6 +320,10 @@ void processCommand(String command){
     printClock();
   } else if(command.startsWith("OK")){
     digitalWrite(ledPin, HIGH);
+    writeIcon(rescueInProgress, 0, 0, 0, 7); 
+  } else if(command.startsWith("END")){
+    clearDisplay();
+    printClock();
   }
 }
 
