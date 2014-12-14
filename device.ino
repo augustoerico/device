@@ -69,12 +69,12 @@ void setup(){
   initializeDisplay();
   // TODO: PCSOS logo here
   
-  // Dummy test
-  writeLetter(0);
-  writeDigit(0);
-  writeDigit(0);
-  writeDigit(3);
-  writeDigit(1);  
+  // Dummy init
+  writeLetter(3);
+  writeLetter(1);
+  writeLetter(4);
+  writeLetter(2);
+  writeLetter(4);  
 }
 
 //===============================================================================
@@ -319,7 +319,7 @@ void processCommand(String command){
   
   String time;
   
-  Serial.println(command);
+  // Serial.println(command);
   
   if(command.startsWith("SYNC")){
     digitalWrite(ledPin, LOW); 
@@ -330,6 +330,7 @@ void processCommand(String command){
     digitalWrite(ledPin, HIGH);
     writeIcon(rescueInProgress, 0, 0, 0, 7); 
   } else if(command.startsWith("END")){
+    digitalWrite(ledPin, LOW);
     clearDisplay();
     printClock();
   }
