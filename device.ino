@@ -22,6 +22,7 @@ const int MAX_COLUMN     = 92;
 const int SERIAL_BUFFER_SIZE = 10;
 const char EOI_BYTE = '\n';              // End of Information byte
 const int btVcc = 5;
+const String AT_SETNAME = "AT+NAME"; 
 
 // Pins
 const int buttonPin = 2;
@@ -61,6 +62,7 @@ void setup(){
   
   // Bluetooth
   Serial.begin(9600);
+  configureBluetooth();
   
   Wire.begin();
   delay(10);
@@ -181,6 +183,13 @@ void initializeDisplay(){
   
 }
 
+void configureBluetooth(){
+  
+  Serial.println("\n" + AT_SETNAME + "PCS.O.S");
+  bluetoothInput = "";
+  
+}
+
 //==============================================================================
 // Set all pixels off
 //
@@ -242,7 +251,6 @@ void writeDigit(int digit){
 //==============================================================================
 // Write a icon to display
 //
-// FIXME pass icon as well
 void writeIcon(const unsigned char icon[], int startPage, int startColumn, 
   int endPage, int endColumn){
    
