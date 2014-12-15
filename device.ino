@@ -22,7 +22,6 @@ const int MAX_COLUMN     = 92;
 const int SERIAL_BUFFER_SIZE = 10;
 const char EOI_BYTE = '\n';              // End of Information byte
 const int btVcc = 5;
-const String AT_SETNAME = "AT+NAME"; 
 
 // Pins
 const int buttonPin = 2;
@@ -62,19 +61,11 @@ void setup(){
   
   // Bluetooth
   Serial.begin(9600);
-  configureBluetooth();
   
   Wire.begin();
   delay(10);
   initializeDisplay();
-  // TODO: PCSOS logo here
   
-  // Dummy init
-  writeLetter(3);
-  writeLetter(1);
-  writeLetter(4);
-  writeLetter(2);
-  writeLetter(4);  
 }
 
 //===============================================================================
@@ -180,13 +171,6 @@ void initializeDisplay(){
   
   delay(50);
   writeCommand(0xAF); // display on
-  
-}
-
-void configureBluetooth(){
-  
-  Serial.println("\n" + AT_SETNAME + "PCS.O.S");
-  bluetoothInput = "";
   
 }
 
@@ -318,8 +302,6 @@ void writeData(int data){
 void processCommand(String command){
   
   String time;
-  
-  // Serial.println(command);
   
   if(command.startsWith("SYNC")){
     digitalWrite(ledPin, LOW); 
